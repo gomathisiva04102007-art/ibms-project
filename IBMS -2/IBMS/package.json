@@ -1,0 +1,28 @@
+{
+  "name": "billing-invoice-management-system",
+  "version": "1.0.0",
+  "description": "Full-Stack Billing and Invoice Management System (FSD College Project)",
+  "scripts": {
+    "backend": "npm start --prefix backend",
+    "frontend": "npm run dev --prefix frontend",
+    "seed": "npm run seed --prefix backend",
+    "test": "npm test --prefix backend",
+    "build": "npm run build --prefix frontend"
+  },
+  "keywords": [
+    "billing",
+    "invoice",
+    "gst",
+    "fullstack",
+    "mern",
+    "react",
+    "nodejs",
+    "express",
+    "mongodb"
+  ],
+  "author": "FSD Project",
+  "license": "ISC",
+  "dependencies": {
+    "docx": "^9.12.0"
+  }
+}
