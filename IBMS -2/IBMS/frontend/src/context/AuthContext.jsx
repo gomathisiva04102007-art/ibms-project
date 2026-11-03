@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { getUser, login as identityLogin, signup, logout as identityLogout, handleAuthCallback, onAuthChange } from '@netlify/identity';
 import { authService } from '../services/api';
+import { authErrorMessage } from '../utils/authErrors';
 
 const AuthContext = createContext(null);
 
@@ -37,7 +38,7 @@ export const AuthProvider = ({ children }) => {
         const data = await initialization.current;
         if (active && data) { setUser(data.user); setProfile(data.profile); }
       } catch (error) {
-        if (active) setAuthError(error.response?.data?.message || 'Unable to restore your session. Please sign in again.');
+        if (active) setAuthError(authErrorMessage(error, 'Unable to confirm your email or restore your session. Please sign in again, or request a new confirmation link.'));
       } finally { if (active) setLoading(false); }
     })();
     return () => { active = false; unsubscribe(); };
@@ -51,7 +52,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async ({ email, password, name, businessName, phone }) => {
     const identity = await signup(email.trim(), password, { full_name: name, businessName, phone });
-    if (!identity.emailVerified) return { confirmationRequired: true };
+    if (!identity.confirmedAt) return { confirmationRequired: true };
     return loadWorkspace();
   };
 
@@ -60,8 +61,12 @@ export const AuthProvider = ({ children }) => {
     setUser(null); setProfile(null);
   };
 
+  // Repeating signup is Identity's supported resend flow for an unconfirmed account.
+  // Passwords stay in form memory and are never persisted by this app.
+  const resendConfirmation = (email, password) => signup(email.trim(), password);
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading, authError, isAuthenticated: !!user, login, register, logout, updateProfile: setProfile }}>
+    <AuthContext.Provider value={{ user, profile, loading, authError, clearAuthError: () => setAuthError(''), isAuthenticated: !!user, login, register, resendConfirmation, logout, updateProfile: setProfile }}>
       {children}
     </AuthContext.Provider>
   );

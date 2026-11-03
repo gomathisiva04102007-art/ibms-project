@@ -6,6 +6,8 @@ The deployed app uses Netlify Identity for accounts and Netlify Database for bil
 
 After deployment, choose **Create new account**, register with your own email address, and open the confirmation link in your inbox. Set your business details under **Settings**, then add customers and products before creating invoices. The former demo login was a local development fixture; existing MongoDB accounts and records are not automatically imported.
 
+If sign-in asks you to confirm your email, open the newest confirmation email before trying again. Both the registration confirmation screen and the sign-in screen offer **Resend confirmation email**. Check your spam folder if it does not arrive; wait for the resend countdown before requesting another link.
+
 The API verifies the current Identity session and scopes every record to its owner. Payments and invoice updates run in a database transaction. The browser uses the same-origin `/api` endpoint, so a separate backend host or `VITE_API_URL` is no longer required.
 
 For focused checks without producing build artifacts:

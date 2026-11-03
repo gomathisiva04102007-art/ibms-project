@@ -3,9 +3,11 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react';
 import Alert from '../../components/common/Alert';
+import ConfirmEmailNotice from '../../components/common/ConfirmEmailNotice';
+import { authErrorMessage, isEmailUnconfirmed } from '../../utils/authErrors';
 
 export default function Login() {
-  const { login, authError } = useAuth();
+  const { login, authError, clearAuthError, resendConfirmation } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -16,6 +18,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [confirmationEmail, setConfirmationEmail] = useState('');
 
   const from = location.state?.from?.pathname || '/';
 
@@ -26,6 +29,8 @@ export default function Login() {
       [name]: type === 'checkbox' ? checked : value,
     }));
     setError('');
+    clearAuthError();
+    if (name === 'email') setConfirmationEmail('');
   };
 
   const handleSubmit = async (e) => {
@@ -41,15 +46,8 @@ export default function Login() {
       await login(formData.email, formData.password);
       navigate(from, { replace: true });
     } catch (err) {
-      if (err.response?.data?.message) {
-        setError(err.response.data.message);
-      } else if (err.code === 'ERR_NETWORK' || [502, 503].includes(err.response?.status)) {
-        setError(
-          'Cannot connect to the login server. Please try again in a moment.'
-        );
-      } else {
-        setError(err.message || 'Login failed. Please check your credentials and try again.');
-      }
+      setConfirmationEmail(isEmailUnconfirmed(err) ? formData.email.trim() : '');
+      setError(authErrorMessage(err, 'Login failed. Please check your credentials and try again.'));
     } finally {
       setLoading(false);
     }
@@ -66,9 +64,13 @@ export default function Login() {
       <Alert
         type="error"
         message={error || authError}
-        onClose={() => setError('')}
+        onClose={() => { setError(''); clearAuthError(); }}
         className="mb-5 rounded-xl border border-rose-300 bg-rose-50 px-3 py-2.5 text-[0.93rem] shadow-sm"
       />
+
+      {confirmationEmail && (
+        <ConfirmEmailNotice key={confirmationEmail} email={confirmationEmail} onResend={() => resendConfirmation(confirmationEmail, formData.password)} />
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>

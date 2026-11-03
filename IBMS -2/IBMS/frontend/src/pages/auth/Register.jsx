@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { User, Mail, Lock, Phone, Building2, UserPlus, Eye, EyeOff } from 'lucide-react';
 import Alert from '../../components/common/Alert';
+import ConfirmEmailNotice from '../../components/common/ConfirmEmailNotice';
+import { authErrorMessage } from '../../utils/authErrors';
 
 export default function Register() {
   const { register } = useAuth();
@@ -57,7 +59,7 @@ export default function Register() {
       navigate('/', { replace: true });
     } catch (err) {
       setError(
-        err.response?.data?.message || err.message || 'Registration failed. Please check the entered data.'
+        authErrorMessage(err, 'Registration failed. Please check the entered data.')
       );
     } finally {
       setLoading(false);
@@ -67,7 +69,8 @@ export default function Register() {
   if (confirmationRequired) return (
     <div className="space-y-4">
       <h3 className="text-xl font-bold text-slate-800">Check your email</h3>
-      <p className="text-sm text-slate-600">Open the confirmation link sent to your email address to activate your account and open your billing workspace.</p>
+      <ConfirmEmailNotice email={formData.email.trim()} onResend={() => register(formData)} />
+      <button type="button" onClick={() => setConfirmationRequired(false)} className="block text-sm font-semibold text-slate-600 hover:underline">Correct my email address</button>
       <Link to="/login" className="inline-block font-semibold text-blue-600 hover:underline">Return to sign in</Link>
     </div>
   );
