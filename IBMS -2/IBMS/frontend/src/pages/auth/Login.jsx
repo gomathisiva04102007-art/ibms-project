@@ -1,22 +1,24 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Mail, Lock, Eye, EyeOff, LogIn, Sparkles } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react';
 import Alert from '../../components/common/Alert';
+import ConfirmEmailNotice from '../../components/common/ConfirmEmailNotice';
+import { authErrorMessage, isEmailUnconfirmed } from '../../utils/authErrors';
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, authError, clearAuthError, resendConfirmation } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const [formData, setFormData] = useState({
-    email: 'demo@example.com',
-    password: 'Password123!',
-    rememberMe: true,
+    email: '',
+    password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [confirmationEmail, setConfirmationEmail] = useState('');
 
   const from = location.state?.from?.pathname || '/';
 
@@ -27,6 +29,8 @@ export default function Login() {
       [name]: type === 'checkbox' ? checked : value,
     }));
     setError('');
+    clearAuthError();
+    if (name === 'email') setConfirmationEmail('');
   };
 
   const handleSubmit = async (e) => {
@@ -42,28 +46,13 @@ export default function Login() {
       await login(formData.email, formData.password);
       navigate(from, { replace: true });
     } catch (err) {
-      if (err.response?.data?.message) {
-        setError(err.response.data.message);
-      } else if (err.code === 'ERR_NETWORK' || [502, 503].includes(err.response?.status)) {
-        setError(
-          'Cannot connect to the login server. Start the backend with "npm run backend", then try again.'
-        );
-      } else {
-        setError('Login failed. Please check your credentials and try again.');
-      }
+      setConfirmationEmail(isEmailUnconfirmed(err) ? formData.email.trim() : '');
+      setError(authErrorMessage(err, 'Login failed. Please check your credentials and try again.'));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFillDemo = () => {
-    setFormData({
-      email: 'demo@example.com',
-      password: 'Password123!',
-      rememberMe: true,
-    });
-    setError('');
-  };
 
   return (
     <div>
@@ -74,10 +63,14 @@ export default function Login() {
 
       <Alert
         type="error"
-        message={error}
-        onClose={() => setError('')}
+        message={error || authError}
+        onClose={() => { setError(''); clearAuthError(); }}
         className="mb-5 rounded-xl border border-rose-300 bg-rose-50 px-3 py-2.5 text-[0.93rem] shadow-sm"
       />
+
+      {confirmationEmail && (
+        <ConfirmEmailNotice key={confirmationEmail} email={confirmationEmail} onResend={() => resendConfirmation(confirmationEmail, formData.password)} />
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -115,7 +108,7 @@ export default function Login() {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              placeholder="Password123!"
+              placeholder="Enter your password"
               required
               className="w-full rounded-xl border border-slate-300 bg-slate-50 py-3 pl-10 pr-10 text-sm text-slate-800 transition-all placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
             />
@@ -129,18 +122,6 @@ export default function Login() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between text-sm">
-          <label className="flex cursor-pointer items-center gap-2 text-slate-600">
-            <input
-              type="checkbox"
-              name="rememberMe"
-              checked={formData.rememberMe}
-              onChange={handleChange}
-              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-            />
-            <span className="text-sm">Remember me</span>
-          </label>
-        </div>
 
         <button
           type="submit"
@@ -157,16 +138,6 @@ export default function Login() {
           )}
         </button>
 
-        <div className="pt-1">
-          <button
-            type="button"
-            onClick={handleFillDemo}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-100"
-          >
-            <Sparkles className="h-3.5 w-3.5 text-blue-600" />
-            Quick Demo: Load College Project Credentials
-          </button>
-        </div>
       </form>
 
       <div className="mt-6 text-center text-xs text-slate-500">
