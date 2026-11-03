@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { getUser, refreshSession } from '@netlify/identity';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const API_BASE_URL = '/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -9,13 +10,11 @@ const api = axios.create({
   },
 });
 
-// Request interceptor: Inject Bearer token
+// Identity manages and refreshes same-origin authentication cookies.
 api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('ibms_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+  async (config) => {
+    await getUser();
+    await refreshSession();
     return config;
   },
   (error) => Promise.reject(error)
@@ -39,10 +38,7 @@ api.interceptors.response.use(
 
 // Auth endpoints
 export const authService = {
-  login: (credentials) => api.post('/auth/login', credentials),
-  register: (userData) => api.post('/auth/register', userData),
   getMe: () => api.get('/auth/me'),
-  logout: () => api.post('/auth/logout'),
 };
 
 // Customer endpoints

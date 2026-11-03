@@ -19,6 +19,7 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [confirmationRequired, setConfirmationRequired] = useState(false);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -48,16 +49,28 @@ export default function Register() {
     try {
       setLoading(true);
       setError('');
-      await register(formData);
+      const result = await register(formData);
+      if (result.confirmationRequired) {
+        setConfirmationRequired(true);
+        return;
+      }
       navigate('/', { replace: true });
     } catch (err) {
       setError(
-        err.response?.data?.message || 'Registration failed. Please check the entered data.'
+        err.response?.data?.message || err.message || 'Registration failed. Please check the entered data.'
       );
     } finally {
       setLoading(false);
     }
   };
+
+  if (confirmationRequired) return (
+    <div className="space-y-4">
+      <h3 className="text-xl font-bold text-slate-800">Check your email</h3>
+      <p className="text-sm text-slate-600">Open the confirmation link sent to your email address to activate your account and open your billing workspace.</p>
+      <Link to="/login" className="inline-block font-semibold text-blue-600 hover:underline">Return to sign in</Link>
+    </div>
+  );
 
   return (
     <div>

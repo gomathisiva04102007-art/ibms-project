@@ -1,0 +1,20 @@
+[build]
+  base = "IBMS -2/IBMS/frontend"
+  command = "npm ci --include=dev && npm run build"
+  publish = "dist"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# Let React Router handle direct links and page refreshes.
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

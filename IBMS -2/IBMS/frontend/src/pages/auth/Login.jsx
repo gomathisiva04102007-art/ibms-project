@@ -1,18 +1,17 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Mail, Lock, Eye, EyeOff, LogIn, Sparkles } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react';
 import Alert from '../../components/common/Alert';
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, authError } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const [formData, setFormData] = useState({
-    email: 'demo@example.com',
-    password: 'Password123!',
-    rememberMe: true,
+    email: '',
+    password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -46,24 +45,16 @@ export default function Login() {
         setError(err.response.data.message);
       } else if (err.code === 'ERR_NETWORK' || [502, 503].includes(err.response?.status)) {
         setError(
-          'Cannot connect to the login server. Start the backend with "npm run backend", then try again.'
+          'Cannot connect to the login server. Please try again in a moment.'
         );
       } else {
-        setError('Login failed. Please check your credentials and try again.');
+        setError(err.message || 'Login failed. Please check your credentials and try again.');
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFillDemo = () => {
-    setFormData({
-      email: 'demo@example.com',
-      password: 'Password123!',
-      rememberMe: true,
-    });
-    setError('');
-  };
 
   return (
     <div>
@@ -74,7 +65,7 @@ export default function Login() {
 
       <Alert
         type="error"
-        message={error}
+        message={error || authError}
         onClose={() => setError('')}
         className="mb-5 rounded-xl border border-rose-300 bg-rose-50 px-3 py-2.5 text-[0.93rem] shadow-sm"
       />
@@ -115,7 +106,7 @@ export default function Login() {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              placeholder="Password123!"
+              placeholder="Enter your password"
               required
               className="w-full rounded-xl border border-slate-300 bg-slate-50 py-3 pl-10 pr-10 text-sm text-slate-800 transition-all placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
             />
@@ -129,18 +120,6 @@ export default function Login() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between text-sm">
-          <label className="flex cursor-pointer items-center gap-2 text-slate-600">
-            <input
-              type="checkbox"
-              name="rememberMe"
-              checked={formData.rememberMe}
-              onChange={handleChange}
-              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-            />
-            <span className="text-sm">Remember me</span>
-          </label>
-        </div>
 
         <button
           type="submit"
@@ -157,16 +136,6 @@ export default function Login() {
           )}
         </button>
 
-        <div className="pt-1">
-          <button
-            type="button"
-            onClick={handleFillDemo}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-100"
-          >
-            <Sparkles className="h-3.5 w-3.5 text-blue-600" />
-            Quick Demo: Load College Project Credentials
-          </button>
-        </div>
       </form>
 
       <div className="mt-6 text-center text-xs text-slate-500">
